@@ -425,7 +425,7 @@ def dump_html(
     if not arg_rst_output:
         return
 
-    rst_file_name = f"{windows_safe_filename(html_file_name.rsplit('.', 1)[0])}.rst"
+    rst_file_name = html_file_name.replace(".html", ".rst")
     rst_file_path = os.path.join(my_outdir_content,rst_file_name)
     try:
         output_rst = pypandoc.convert_file(str(html_file_path), 'rst', format='html',extra_args=['--standalone','--wrap=none','--list-tables'])
