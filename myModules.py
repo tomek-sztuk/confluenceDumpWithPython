@@ -131,6 +131,17 @@ def get_page_parent(arg_site,arg_page_id,arg_username,arg_api_token):
 def remove_illegal_characters(input):
     return re.sub(r'[^\w_\.\- ]+', '_', input)
 
+def windows_safe_filename(name, max_len=180):
+    name = re.sub(r'[<>:"/\\|?*]', '_', name)
+    name = re.sub(r'[\x00-\x1f]', '_', name)
+    name = re.sub(r'[\s\.]+$', '', name)
+    name = name.strip()
+    if len(name) > max_len:
+        name = name[:max_len]
+    if not name:
+        name = "untitled"
+    return name
+
 def get_attachments(arg_site,arg_page_id,arg_outdir_attach,arg_username,arg_api_token):
     my_attachments_list = []
     server_url = f"https://{arg_site}.atlassian.net/wiki/rest/api/content/{arg_page_id}?expand=children.attachment"
@@ -250,7 +261,8 @@ def dump_html(
         pre['class'] = [c for c in pre.get('class', []) if c != 'syntaxhighlighter-pre']
 
     # continuing
-    html_file_name = (f"{arg_title}.html").replace("/","-").replace(":","-").replace(" ","_")
+    safe_title = windows_safe_filename(arg_title.replace(" ", "_").replace(":", "-").replace("/", "-"))
+    html_file_name = f"{safe_title}.html"
     html_file_path = os.path.join(my_outdir_content,html_file_name)
     my_attachments = get_attachments(arg_site,arg_page_id,str(my_outdirs[0]),arg_username,arg_api_token)
     #
@@ -412,8 +424,8 @@ def dump_html(
     #
     if not arg_rst_output:
         return
-    
-    rst_file_name = f"{html_file_name.replace('html','rst')}"
+
+    rst_file_name = f"{windows_safe_filename(html_file_name.rsplit('.', 1)[0])}.rst"
     rst_file_path = os.path.join(my_outdir_content,rst_file_name)
     try:
         output_rst = pypandoc.convert_file(str(html_file_path), 'rst', format='html',extra_args=['--standalone','--wrap=none','--list-tables'])
